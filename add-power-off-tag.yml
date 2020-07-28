@@ -1,0 +1,77 @@
+---
+
+# Get count of ec2 with the given tag
+
+- name: Get count of EC2
+
+  hosts: localhost
+
+  connection: local
+
+  gather_facts: False
+
+
+
+  tasks:
+
+    - debug: var=manageiq.event_target
+
+
+
+    - name: Find Instance ID
+
+      uri:
+
+        url: "{{ manageiq.api_url }}/api/{{manageiq.event_target}}"
+
+        method: GET
+
+        validate_certs: no
+
+        headers:
+
+          X-Auth-Token: "{{ manageiq.api_token }}"
+
+        body_format: json
+
+      register: response
+
+
+
+    - debug: var=response.json.ems_ref
+
+    - set_fact:
+
+        instance_id: "{{ response.json.ems_ref }}"
+
+
+
+    - name: Remove power On tag
+
+      ec2_tag:
+
+        region: us-east-1
+
+        resource: "{{ instance_id }}"
+
+        tags:
+
+          Power:
+
+        state: absent
+
+
+
+    - name: Add power On tag
+
+      ec2_tag:
+
+        region: us-east-1
+
+        resource: "{{ instance_id }}"
+
+        tags:
+
+          Power: "Off"
+
+        state: present
